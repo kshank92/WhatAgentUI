@@ -5,6 +5,7 @@ import aiService, { AIConfig } from '@/services/aiService';
 import emailService, { EmailConfig } from '@/services/emailService';
 import conversationService from '@/services/conversationService';
 import { useToast } from '@/components/ui/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface AppContextProps {
   initialized: boolean;
@@ -28,41 +29,22 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const [agentActive, setAgentActive] = useState(false);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const { currentAccount } = useAuth();
 
-  // Initialize with default values on first load
+  // Initialize services when current account changes
   useEffect(() => {
-    if (!initialized) {
-      // Set default values for demonstration purposes
-      const whatsAppConfig: WhatsAppConfig = {
-        apiKey: 'demo-api-key',
-        phoneNumberId: '1234567890',
-        verificationToken: 'demo-token',
-        businessAccountId: '1234567890',
-        useBusinessApi: true, // Default to business API
-        regularApiEndpoint: 'https://api.whatsapp.com/v1/messages' // Example endpoint
-      };
-      
-      const aiConfig: AIConfig = {
-        model: 'gpt-4',
-        temperature: 0.7,
-        maxTokens: 500,
-        businessPrompt: 'You are a helpful assistant for a business that sells premium software services.'
-      };
-      
-      const emailConfig: EmailConfig = {
-        transcriptEmail: 'admin@example.com',
-        notificationEmail: 'alerts@example.com'
-      };
-      
+    if (currentAccount) {
       initializeServices(
-        whatsAppConfig,
-        aiConfig,
-        emailConfig,
-        'thank you,goodbye,end,done',
-        '123456789'
+        currentAccount.whatsAppConfig,
+        currentAccount.aiConfig,
+        currentAccount.emailConfig,
+        currentAccount.endKeywords,
+        currentAccount.groupId
       );
+    } else {
+      setInitialized(false);
     }
-  }, [initialized]);
+  }, [currentAccount]);
 
   const initializeServices = (
     whatsAppConfig: WhatsAppConfig, 

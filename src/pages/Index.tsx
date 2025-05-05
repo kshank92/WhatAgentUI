@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,10 +13,14 @@ import SetupGuide from "@/components/SetupGuide";
 import ConversationView from "@/components/ConversationView";
 import AISettings from "@/components/AISettings";
 import Header from "@/components/Header";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
   const { toast } = useToast();
+  const { currentAccount } = useAuth();
+  const navigate = useNavigate();
 
   const handleStatusCheck = () => {
     toast({
@@ -23,6 +28,12 @@ const Index = () => {
       description: "All systems operational. WhatsApp API connected.",
     });
   };
+
+  if (!currentAccount) {
+    // Redirect to dashboard to select an account if none is selected
+    navigate('/dashboard');
+    return null;
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-50 to-slate-100">
@@ -36,7 +47,7 @@ const Index = () => {
                 <div>
                   <CardTitle>WhatsApp AI Agent</CardTitle>
                   <CardDescription>
-                    Manage your automated WhatsApp conversations
+                    Managing your automated WhatsApp conversations for <strong>{currentAccount.name}</strong>
                   </CardDescription>
                 </div>
                 <div className="flex items-center gap-2">
