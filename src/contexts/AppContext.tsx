@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import whatsAppService, { WhatsAppConfig } from '@/services/whatsappService';
 import aiService, { AIConfig } from '@/services/aiService';
@@ -79,7 +78,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       toast({
         title: "Services Initialized",
         description: "All services have been successfully configured.",
-        variant: "success",
       });
     } catch (error) {
       console.error("Error initializing services:", error);

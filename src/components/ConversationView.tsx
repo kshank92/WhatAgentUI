@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -82,13 +81,15 @@ const ConversationView = () => {
       <div className="md:col-span-1 border rounded-lg overflow-hidden">
         <div className="p-4 border-b bg-slate-50">
           <div className="flex items-center gap-2 mb-3">
-            <Input 
-              placeholder="Search conversations..." 
-              className="h-9"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              prefix={<Search className="h-4 w-4 text-muted-foreground" />}
-            />
+            <div className="relative w-full">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input 
+                placeholder="Search conversations..." 
+                className="h-9 pl-9"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
           </div>
           <div className="flex items-center gap-2">
             <Tabs defaultValue="all" className="w-full" onValueChange={setFilterStatus}>

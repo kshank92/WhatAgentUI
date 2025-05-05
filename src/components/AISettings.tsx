@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -67,7 +66,6 @@ const AISettings = () => {
     toast({
       title: "Connection Tested",
       description: "WhatsApp API connection successful!",
-      variant: "success",
     });
   };
 
