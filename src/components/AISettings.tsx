@@ -31,7 +31,9 @@ const AISettings = () => {
     groupId: "123456789",
     apiKey: "your-api-key-here",
     phoneNumberId: "1234567890",
-    verificationToken: "verification-token"
+    verificationToken: "verification-token",
+    useBusinessApi: true,
+    regularApiEndpoint: "https://api.whatsapp.com/v1/messages"
   });
 
   const handleSettingChange = (key: string, value: string | number | boolean) => {
@@ -48,7 +50,7 @@ const AISettings = () => {
     }));
   };
 
-  const handleWhatsAppChange = (key: string, value: string) => {
+  const handleWhatsAppChange = (key: string, value: string | boolean) => {
     setWhatsapp(prev => ({
       ...prev,
       [key]: value
@@ -227,10 +229,24 @@ const AISettings = () => {
         <TabsContent value="whatsapp" className="mt-4 space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>WhatsApp Business API Configuration</CardTitle>
+              <CardTitle>WhatsApp API Configuration</CardTitle>
               <CardDescription>Configure WhatsApp API connection settings</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="use-business-api">Use WhatsApp Business API</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Toggle between WhatsApp Business API and regular WhatsApp API
+                  </p>
+                </div>
+                <Switch 
+                  id="use-business-api" 
+                  checked={whatsapp.useBusinessApi}
+                  onCheckedChange={(checked) => handleWhatsAppChange("useBusinessApi", checked)}
+                />
+              </div>
+
               <div>
                 <Label htmlFor="api-key">WhatsApp API Key</Label>
                 <Input 
@@ -258,6 +274,32 @@ const AISettings = () => {
                   onChange={(e) => handleWhatsAppChange("verificationToken", e.target.value)}
                 />
               </div>
+              
+              {whatsapp.useBusinessApi ? (
+                <div>
+                  <Label htmlFor="business-account-id">Business Account ID</Label>
+                  <Input 
+                    id="business-account-id" 
+                    value={whatsapp.groupId}
+                    onChange={(e) => handleWhatsAppChange("groupId", e.target.value)}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Your WhatsApp Business Account ID
+                  </p>
+                </div>
+              ) : (
+                <div>
+                  <Label htmlFor="regular-api-endpoint">Regular WhatsApp API Endpoint</Label>
+                  <Input 
+                    id="regular-api-endpoint" 
+                    value={whatsapp.regularApiEndpoint}
+                    onChange={(e) => handleWhatsAppChange("regularApiEndpoint", e.target.value)}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Endpoint for the regular WhatsApp API integration
+                  </p>
+                </div>
+              )}
               
               <div>
                 <Label htmlFor="group-id">Transcript Group ID</Label>

@@ -1,7 +1,7 @@
 
 /**
  * WhatsApp API integration service
- * This service handles communication with the WhatsApp Business API
+ * This service handles communication with both regular WhatsApp API and the WhatsApp Business API
  */
 
 export interface WhatsAppConfig {
@@ -9,6 +9,8 @@ export interface WhatsAppConfig {
   phoneNumberId: string;
   verificationToken: string;
   businessAccountId: string;
+  useBusinessApi: boolean; // Flag to determine which API to use
+  regularApiEndpoint?: string; // Endpoint for regular WhatsApp API
 }
 
 export interface WhatsAppMessage {
@@ -32,7 +34,8 @@ class WhatsAppService {
    */
   public initialize(config: WhatsAppConfig): void {
     this.config = config;
-    console.log("WhatsApp service initialized with phone number ID:", config.phoneNumberId);
+    const apiType = config.useBusinessApi ? "Business API" : "Regular API";
+    console.log(`WhatsApp service initialized with ${apiType}. Phone number ID:`, config.phoneNumberId);
   }
   
   /**
@@ -58,31 +61,59 @@ class WhatsAppService {
    */
   public processWebhook(body: any): WhatsAppMessage | null {
     try {
-      if (!body.object || body.object !== 'whatsapp_business_account') {
+      if (!this.config) {
+        console.error("WhatsApp service not initialized");
         return null;
       }
       
-      const entry = body.entry?.[0];
-      if (!entry) return null;
-      
-      const changes = entry.changes?.[0];
-      if (!changes || changes.field !== 'messages') return null;
-      
-      const value = changes.value;
-      const messageData = value.messages?.[0];
-      
-      if (!messageData || !messageData.from) return null;
-      
-      return {
-        id: messageData.id,
-        from: messageData.from,
-        timestamp: messageData.timestamp,
-        text: messageData.text?.body || ''
-      };
+      if (this.config.useBusinessApi) {
+        return this.processBusinessWebhook(body);
+      } else {
+        return this.processRegularWebhook(body);
+      }
     } catch (error) {
       console.error("Error processing webhook:", error);
       return null;
     }
+  }
+  
+  private processBusinessWebhook(body: any): WhatsAppMessage | null {
+    if (!body.object || body.object !== 'whatsapp_business_account') {
+      return null;
+    }
+    
+    const entry = body.entry?.[0];
+    if (!entry) return null;
+    
+    const changes = entry.changes?.[0];
+    if (!changes || changes.field !== 'messages') return null;
+    
+    const value = changes.value;
+    const messageData = value.messages?.[0];
+    
+    if (!messageData || !messageData.from) return null;
+    
+    return {
+      id: messageData.id,
+      from: messageData.from,
+      timestamp: messageData.timestamp,
+      text: messageData.text?.body || ''
+    };
+  }
+  
+  private processRegularWebhook(body: any): WhatsAppMessage | null {
+    // Process webhook data from regular WhatsApp API
+    // Structure may differ from business API
+    const messageData = body.messages?.[0];
+    
+    if (!messageData || !messageData.from) return null;
+    
+    return {
+      id: messageData.id || `reg_${Date.now()}`,
+      from: messageData.from,
+      timestamp: messageData.timestamp || new Date().toISOString(),
+      text: messageData.text || messageData.body || ''
+    };
   }
   
   /**
@@ -100,50 +131,11 @@ class WhatsAppService {
     try {
       console.log(`Sending WhatsApp message to ${to}: ${text}`);
       
-      // In a real implementation, this would make an API call to WhatsApp
-      // For this demo, we'll simulate a successful response
-      
-      return {
-        messageId: `mock_${Date.now()}`,
-        success: true
-      };
-      
-      /* Real implementation would look like:
-      
-      const response = await fetch(
-        `https://graph.facebook.com/v17.0/${this.config.phoneNumberId}/messages`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${this.config.apiKey}`
-          },
-          body: JSON.stringify({
-            messaging_product: 'whatsapp',
-            recipient_type: 'individual',
-            to: to,
-            type: 'text',
-            text: { body: text }
-          })
-        }
-      );
-      
-      const data = await response.json();
-      
-      if (!response.ok) {
-        return {
-          messageId: '',
-          success: false,
-          error: data.error?.message || 'Unknown error'
-        };
+      if (this.config.useBusinessApi) {
+        return this.sendBusinessApiMessage(to, text);
+      } else {
+        return this.sendRegularApiMessage(to, text);
       }
-      
-      return {
-        messageId: data.messages[0].id,
-        success: true
-      };
-      */
-      
     } catch (error) {
       console.error("Error sending WhatsApp message:", error);
       return {
@@ -154,17 +146,137 @@ class WhatsAppService {
     }
   }
   
+  private async sendBusinessApiMessage(to: string, text: string): Promise<WhatsAppSendResult> {
+    // For demo/simulation purposes
+    return {
+      messageId: `mock_business_${Date.now()}`,
+      success: true
+    };
+    
+    /* Real implementation would look like:
+    
+    const response = await fetch(
+      `https://graph.facebook.com/v17.0/${this.config!.phoneNumberId}/messages`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.config!.apiKey}`
+        },
+        body: JSON.stringify({
+          messaging_product: 'whatsapp',
+          recipient_type: 'individual',
+          to: to,
+          type: 'text',
+          text: { body: text }
+        })
+      }
+    );
+    
+    const data = await response.json();
+    
+    if (!response.ok) {
+      return {
+        messageId: '',
+        success: false,
+        error: data.error?.message || 'Unknown error'
+      };
+    }
+    
+    return {
+      messageId: data.messages[0].id,
+      success: true
+    };
+    */
+  }
+  
+  private async sendRegularApiMessage(to: string, text: string): Promise<WhatsAppSendResult> {
+    // Implementation for regular WhatsApp API
+    // For demo/simulation purposes
+    return {
+      messageId: `mock_regular_${Date.now()}`,
+      success: true
+    };
+    
+    /* Real implementation would look like:
+    
+    if (!this.config?.regularApiEndpoint) {
+      return {
+        messageId: '',
+        success: false,
+        error: 'Regular API endpoint not configured'
+      };
+    }
+    
+    const response = await fetch(
+      this.config.regularApiEndpoint,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.config.apiKey}`
+        },
+        body: JSON.stringify({
+          phone: to,
+          message: text
+        })
+      }
+    );
+    
+    const data = await response.json();
+    
+    if (!response.ok) {
+      return {
+        messageId: '',
+        success: false,
+        error: data.error || 'Unknown error'
+      };
+    }
+    
+    return {
+      messageId: data.id || `reg_${Date.now()}`,
+      success: true
+    };
+    */
+  }
+  
   /**
    * Send a message to a WhatsApp group
    */
   public async sendToGroup(groupId: string, text: string): Promise<WhatsAppSendResult> {
-    // Similar to sendMessage but for groups
-    console.log(`Sending message to WhatsApp group ${groupId}: ${text}`);
+    if (!this.config) {
+      return { 
+        messageId: '', 
+        success: false, 
+        error: "WhatsApp service not initialized" 
+      };
+    }
     
-    return {
-      messageId: `mock_group_${Date.now()}`,
-      success: true
-    };
+    try {
+      console.log(`Sending message to WhatsApp group ${groupId}: ${text}`);
+      
+      // Implementation varies between regular and business API
+      if (this.config.useBusinessApi) {
+        // Business API group message
+        return {
+          messageId: `mock_business_group_${Date.now()}`,
+          success: true
+        };
+      } else {
+        // Regular API group message
+        return {
+          messageId: `mock_regular_group_${Date.now()}`,
+          success: true
+        };
+      }
+    } catch (error) {
+      console.error("Error sending group message:", error);
+      return {
+        messageId: '',
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
+    }
   }
 }
 

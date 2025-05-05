@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import whatsAppService, { WhatsAppConfig } from '@/services/whatsappService';
 import aiService, { AIConfig } from '@/services/aiService';
@@ -36,7 +37,9 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         apiKey: 'demo-api-key',
         phoneNumberId: '1234567890',
         verificationToken: 'demo-token',
-        businessAccountId: '1234567890'
+        businessAccountId: '1234567890',
+        useBusinessApi: true, // Default to business API
+        regularApiEndpoint: 'https://api.whatsapp.com/v1/messages' // Example endpoint
       };
       
       const aiConfig: AIConfig = {
