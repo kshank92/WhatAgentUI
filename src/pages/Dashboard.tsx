@@ -18,12 +18,20 @@ import {
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
-const Dashboard = () => {
+const Dashboard: React.FC = () => {
   const { user, accounts, currentAccount, switchAccount, logout } = useAuth();
   const navigate = useNavigate();
 
+  // Instead of returning void, we'll return an explicit JSX element when redirecting
   if (!user) {
-    return navigate('/login');
+    navigate('/login');
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600">Redirecting to login...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
